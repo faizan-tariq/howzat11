@@ -1,26 +1,293 @@
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Barlow:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --pitch-green: #22c55e;
+  --gold-accent: #fbbf24;
+  --stadium-dark: #0f172a;
+  --card-bg: rgba(30, 41, 59, 0.9);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+html,
+body {
+  overflow-x: hidden;
+  font-family: 'Barlow', system-ui, sans-serif;
+  min-height: 100vh;
+  background-color: #0f172a;
+  overscroll-behavior: none;
+}
+
+/* Fixed background div (works on mobile) */
+.stadium-lights {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-image: 
+    linear-gradient(to bottom, rgba(15, 23, 42, 0.7) 100%, rgba(15, 23, 42, 0.85) 100%),
+    url('https://howzat11.s3.us-east-1.amazonaws.com/stadium.jpg');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  pointer-events: none;
+}
+
+/* Custom Scrollbar */
+/* Standard properties (Firefox, Android Chrome) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #d97706 #1e293b;
+}
+
+/* WebKit browsers (Desktop Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1e293b;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #fbbf24, #d97706);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #fcd34d, #f59e0b);
+}
+
+/* Player Card Styles */
+.player-card {
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
+
+.player-card-inner {
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+}
+
+.player-card:hover .player-card-inner {
+  transform: rotateY(10deg) rotateX(5deg);
+}
+
+.player-card-shine {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.player-card:hover .player-card-shine {
+  opacity: 1;
+}
+
+/* Role Badge Styles */
+.badge-batsman {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+}
+
+.badge-bowler {
+  background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+}
+
+.badge-allrounder {
+  background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%);
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.4);
+}
+
+.badge-wicketkeeper {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+}
+
+/* Selection Glow */
+.selected-glow {
+  box-shadow: 
+    0 0 0 3px rgba(251, 191, 36, 0.8),
+    0 0 30px rgba(251, 191, 36, 0.5),
+    0 0 60px rgba(251, 191, 36, 0.3);
+}
+
+/* Pitch Formation View */
+.formation-pitch {
+  background: 
+    radial-gradient(ellipse at center, #22c55e 0%, #16a34a 100%);
+  position: relative;
+  border-radius: 50%;
+  border: 4px solid rgba(255, 255, 255, 0.2);
+}
+
+.formation-pitch::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60%;
+  height: 20%;
+  background: #c9b896;
+  border-radius: 2px;
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Crease Lines */
+.formation-pitch::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 65%;
+  height: 25%;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-radius: 2px;
+}
+
+/* Animated Counter */
+.counter-digit {
+  font-family: 'Orbitron', monospace;
+  text-shadow: 0 0 20px currentColor;
+}
+
+/* Glass Effect */
+.glass {
+  background: rgba(30, 41, 59, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Team Logo Placeholder */
+.team-logo {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border: 2px solid rgba(251, 191, 36, 0.3);
+}
+
+/* Stat Bar */
+.stat-bar {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.stat-bar-fill {
+  background: linear-gradient(90deg, #fbbf24, #f59e0b);
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease-out;
+}
+
+/* Floating Animation */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Pulse Ring Animation */
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.pulse-ring {
+  position: absolute;
+  border: 2px solid rgba(251, 191, 36, 0.5);
+  border-radius: 50%;
+  animation: pulse-ring 2s infinite;
+}
+
+/* Shimmer Effect */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Card Reveal Animation */
+@keyframes card-reveal {
+  0% {
+    transform: translateY(50px) scale(0.8);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.card-reveal {
+  animation: card-reveal 0.5s ease-out forwards;
+}
+
+/* Trophy Glow */
+.trophy-glow {
+  filter: drop-shadow(0 0 10px rgba(251, 191, 36, 0.5));
+}
+
+/* Match Info Banner */
+.match-banner {
+  background: linear-gradient(
+    90deg,
+    rgba(30, 41, 59, 0.9) 0%,
+    rgba(30, 41, 59, 0.7) 50%,
+    rgba(30, 41, 59, 0.9) 100%
+  );
+  border-top: 2px solid rgba(251, 191, 36, 0.3);
+  border-bottom: 2px solid rgba(251, 191, 36, 0.3);
+}
+
+/* Drag Preview */
+.drag-preview {
+  transform: rotate(3deg) scale(1.05);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+/* Selection Counter Badge */
+.selection-badge {
+  background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+  font-family: 'Orbitron', monospace;
+  font-weight: 700;
 }

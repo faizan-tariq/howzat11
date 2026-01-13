@@ -1,65 +1,267 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useCallback, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Player, TOTAL_PLAYERS } from '@/types';
+import { availablePlayers } from '@/data/players';
+import PlayerCard from '@/components/PlayerCard';
+import SelectedTeamPanel from '@/components/SelectedTeamPanel';
+import SuccessModal from '@/components/SuccessModal';
+import { Menu, X } from 'lucide-react';
+import clsx from 'clsx';
+
+const STORAGE_KEY = 'howzat11_team';
+
+interface StoredState {
+  selectedPlayerIds: string[];
+  captainId: string | null;
+  wicketKeeperId: string | null;
+}
 
 export default function Home() {
+  const [selectedPlayers, setSelectedPlayers] = useState<Player[]>([]);
+  const [captain, setCaptain] = useState<Player | null>(null);
+  const [wicketKeeper, setWicketKeeper] = useState<Player | null>(null);
+  const [showSidebar, setShowSidebar] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Load state from localStorage on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const data: StoredState = JSON.parse(stored);
+        
+        // Restore selected players
+        const players = data.selectedPlayerIds
+          .map(id => availablePlayers.find(p => p.id === id))
+          .filter((p): p is Player => p !== undefined);
+        setSelectedPlayers(players);
+        
+        // Restore captain
+        if (data.captainId) {
+          const cap = availablePlayers.find(p => p.id === data.captainId);
+          if (cap) setCaptain(cap);
+        }
+        
+        // Restore wicket keeper
+        if (data.wicketKeeperId) {
+          const wk = availablePlayers.find(p => p.id === data.wicketKeeperId);
+          if (wk) setWicketKeeper(wk);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load state from localStorage:', e);
+    }
+    setIsLoaded(true);
+  }, []);
+
+  // Save state to localStorage whenever it changes
+  useEffect(() => {
+    if (!isLoaded) return;
+    
+    const data: StoredState = {
+      selectedPlayerIds: selectedPlayers.map(p => p.id),
+      captainId: captain?.id || null,
+      wicketKeeperId: wicketKeeper?.id || null,
+    };
+    
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch (e) {
+      console.error('Failed to save state to localStorage:', e);
+    }
+  }, [selectedPlayers, captain, wicketKeeper, isLoaded]);
+
+  // Check if player can be selected
+  const canSelectPlayer = useCallback((player: Player): boolean => {
+    if (selectedPlayers.length >= TOTAL_PLAYERS) return false;
+    if (selectedPlayers.some(p => p.id === player.id)) return false;
+    return true;
+  }, [selectedPlayers]);
+
+  // Handle player selection
+  const handleSelectPlayer = useCallback((player: Player) => {
+    const isSelected = selectedPlayers.some(p => p.id === player.id);
+    
+    if (isSelected) {
+      // Remove player
+      setSelectedPlayers(prev => prev.filter(p => p.id !== player.id));
+      if (captain?.id === player.id) setCaptain(null);
+      if (wicketKeeper?.id === player.id) setWicketKeeper(null);
+    } else if (canSelectPlayer(player)) {
+      // Add player
+      setSelectedPlayers(prev => [...prev, player]);
+    }
+  }, [selectedPlayers, captain, wicketKeeper, canSelectPlayer]);
+
+  // Handle captain/wk selection
+  const handleSetCaptain = useCallback((player: Player | null) => {
+    setCaptain(prev => prev?.id === player?.id ? null : player);
+  }, []);
+
+  const handleSetWicketKeeper = useCallback((player: Player | null) => {
+    setWicketKeeper(prev => prev?.id === player?.id ? null : player);
+  }, []);
+
+  // Handle reordering players (for batting order)
+  const handleReorderPlayers = useCallback((reorderedPlayers: Player[]) => {
+    setSelectedPlayers(reorderedPlayers);
+  }, []);
+
+  // Handle team submission
+  const handleSubmit = useCallback(() => {
+    if (selectedPlayers.length === 11 && captain && wicketKeeper) {
+      setShowSuccess(true);
+    }
+  }, [selectedPlayers, captain, wicketKeeper]);
+
+  // Reset team
+  const handleReset = useCallback(() => {
+    setSelectedPlayers([]);
+    setCaptain(null);
+    setWicketKeeper(null);
+    setShowSuccess(false);
+  }, []);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main className="min-h-screen pt-6 sm:pt-8 pb-20 select-none relative z-10">
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4">
+        {/* Main Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Players Section */}
+          <div className="lg:col-span-2">
+            <div className="grid grid-cols-4 gap-2 sm:gap-4">
+              {availablePlayers.map((player) => {
+                const isSelected = selectedPlayers.some(p => p.id === player.id);
+                const canSelect = canSelectPlayer(player);
+
+                return (
+                  <div
+                    key={player.id}
+                    className={clsx(
+                      !isSelected && !canSelect && 'opacity-40 pointer-events-none'
+                    )}
+                  >
+                    <PlayerCard
+                      player={player}
+                      isSelected={isSelected}
+                      onSelect={handleSelectPlayer}
+                      isCaptain={captain?.id === player.id}
+                      isWicketKeeper={wicketKeeper?.id === player.id}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Desktop Sidebar */}
+          <div className="hidden lg:block">
+            <div className="sticky top-4">
+              <SelectedTeamPanel
+                players={selectedPlayers}
+                captain={captain}
+                wicketKeeper={wicketKeeper}
+                onRemovePlayer={handleSelectPlayer}
+                onSetCaptain={handleSetCaptain}
+                onSetWicketKeeper={handleSetWicketKeeper}
+                onReorderPlayers={handleReorderPlayers}
+                onSubmit={handleSubmit}
+              />
+            </div>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+      </div>
+
+      {/* Mobile Sidebar Overlay */}
+      <AnimatePresence>
+        {showSidebar && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowSidebar(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25 }}
+              className="fixed right-0 top-0 bottom-0 w-full max-w-md z-50 lg:hidden"
+            >
+              <div className="h-full bg-slate-900 p-4">
+                <SelectedTeamPanel
+                  players={selectedPlayers}
+                  captain={captain}
+                  wicketKeeper={wicketKeeper}
+                  onRemovePlayer={handleSelectPlayer}
+                  onSetCaptain={handleSetCaptain}
+                  onSetWicketKeeper={handleSetWicketKeeper}
+                  onReorderPlayers={handleReorderPlayers}
+                  onSubmit={handleSubmit}
+                  onClose={() => setShowSidebar(false)}
+                />
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Success Modal */}
+      <SuccessModal
+        isOpen={showSuccess}
+        onClose={handleReset}
+        players={selectedPlayers}
+        captain={captain}
+        wicketKeeper={wicketKeeper}
+      />
+
+      {/* Floating Player Count (Mobile) */}
+      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 lg:hidden">
+        <motion.div
+          animate={{ y: selectedPlayers.length > 0 ? 0 : 100 }}
+          transition={{ type: 'spring', stiffness: 200 }}
+          className="flex items-center gap-4 bg-white/10 backdrop-blur-md px-6 py-3 rounded-full border border-white/20 shadow-xl"
+        >
+          <div className="flex -space-x-2">
+            {selectedPlayers.slice(0, 4).map((player) => (
+              <div
+                key={player.id}
+                className="relative w-8 h-8 rounded-full border-2 border-white bg-gray-800 overflow-hidden"
+              >
+                {player.imageUrl && (
+                  <img 
+                    src={player.imageUrl} 
+                    alt={player.name}
+                    className="w-full h-full object-cover"
+                  />
+                )}
+                <img 
+                  src="https://howzat11.s3.us-east-1.amazonaws.com/kit.png"
+                  alt=""
+                  className="absolute left-1/2 -translate-x-1/2 bottom-0 w-full h-auto pointer-events-none"
+                />
+              </div>
+            ))}
+            {selectedPlayers.length > 4 && (
+              <div className="w-8 h-8 rounded-full bg-amber-500 border-2 border-white flex items-center justify-center text-xs font-bold text-black">
+                +{selectedPlayers.length - 4}
+              </div>
+            )}
+          </div>
+          <button
+            onClick={() => setShowSidebar(true)}
+            className="px-6 py-2 bg-amber-500 text-black font-bold rounded-lg whitespace-nowrap"
           >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+            View Team
+          </button>
+        </motion.div>
+      </div>
+    </main>
   );
 }
