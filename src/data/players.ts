@@ -250,6 +250,17 @@ export const availablePlayers: Player[] = [
     },
   },
   {
+    id: 'hassan-ali',
+    name: 'Hassan Ali',
+    country: 'Pakistan',
+    role: 'Bowler',
+    bowlingStyle: 'Fast',
+    imageUrl: 'https://howzat11.s3.us-east-1.amazonaws.com/hassan-ali.png',
+    stats: {
+      economy: 8.35,
+    },
+  },
+  {
     id: 'abrar-ahmed',
     name: 'Abrar Ahmed',
     country: 'Pakistan',
@@ -280,6 +291,28 @@ export const availablePlayers: Player[] = [
     imageUrl: 'https://howzat11.s3.us-east-1.amazonaws.com/usman-tariq.png',
     stats: {
       economy: 7.15,
+    },
+  },
+  {
+    id: 'mohammad-rizwan',
+    name: 'M. Rizwan',
+    country: 'Pakistan',
+    role: 'Batsman',
+    bowlingStyle: 'none',
+    imageUrl: 'https://howzat11.s3.us-east-1.amazonaws.com/mohammad-rizwan.png',
+    stats: {
+      strikeRate: 112.12,
+    },
+  },
+  {
+    id: 'haider-ali',
+    name: 'Haider Ali',
+    country: 'Pakistan',
+    role: 'Batsman',
+    bowlingStyle: 'none',
+    imageUrl: 'https://howzat11.s3.us-east-1.amazonaws.com/haider-ali.png',
+    stats: {
+      strikeRate: 132.12,
     },
   },
 ];
