@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Player } from '@/types';
 import { Trophy, X, Share2 } from 'lucide-react';
 import clsx from 'clsx';
-import { forwardRef } from 'react';
 
 interface SuccessModalProps {
   isOpen: boolean;
@@ -16,7 +15,7 @@ interface SuccessModalProps {
   isSharedTeam?: boolean;
 }
 
-const SuccessModal = forwardRef<HTMLDivElement, SuccessModalProps>(function SuccessModal({
+export default function SuccessModal({
   isOpen,
   onClose,
   players,
@@ -24,7 +23,7 @@ const SuccessModal = forwardRef<HTMLDivElement, SuccessModalProps>(function Succ
   wicketKeeper,
   onShare,
   isSharedTeam = false,
-}, ref) {
+}: SuccessModalProps) {
   return (
     <AnimatePresence>
       {isOpen && (
@@ -45,7 +44,6 @@ const SuccessModal = forwardRef<HTMLDivElement, SuccessModalProps>(function Succ
 
           {/* Modal */}
           <motion.div
-            ref={ref}
             initial={{ scale: 0.5, opacity: 0, rotateX: -15 }}
             animate={{ scale: 1, opacity: 1, rotateX: 0 }}
             exit={{ scale: 0.5, opacity: 0, rotateX: 15 }}
@@ -337,6 +335,4 @@ const SuccessModal = forwardRef<HTMLDivElement, SuccessModalProps>(function Succ
       )}
     </AnimatePresence>
   );
-});
-
-export default SuccessModal;
+}

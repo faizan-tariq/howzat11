@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Player, TOTAL_PLAYERS } from '@/types';
 import { availablePlayers } from '@/data/players';
@@ -9,7 +9,6 @@ import SelectedTeamPanel from '@/components/SelectedTeamPanel';
 import SuccessModal from '@/components/SuccessModal';
 import { Menu, X } from 'lucide-react';
 import clsx from 'clsx';
-import html2canvas from 'html2canvas';
 
 const STORAGE_KEY = 'howzat11_team';
 
@@ -58,9 +57,6 @@ export default function Home() {
     wicketKeeper: Player | null;
   } | null>(null);
   const [showSharedModal, setShowSharedModal] = useState(false);
-  
-  // Ref for capturing modal screenshot
-  const modalRef = useRef<HTMLDivElement>(null);
 
   // Load state from localStorage and check URL for shared team
   useEffect(() => {
@@ -232,45 +228,10 @@ export default function Home() {
       }
     };
     
-    // Try to capture screenshot and share with image
-    let imageFile: File | null = null;
-    
-    if (modalRef.current) {
-      try {
-        const canvas = await html2canvas(modalRef.current, {
-          backgroundColor: '#1e293b',
-          scale: 2,
-          useCORS: true,
-          allowTaint: true,
-        });
-        
-        const blob = await new Promise<Blob | null>((resolve) => {
-          canvas.toBlob((b) => resolve(b), 'image/png', 1.0);
-        });
-        
-        if (blob) {
-          imageFile = new File([blob], 'howzat11-team.png', { type: 'image/png' });
-        }
-      } catch (err) {
-        console.error('Failed to capture screenshot:', err);
-      }
-    }
-    
-    // Try Web Share API with image (mobile native share)
+    // Try Web Share API first (mobile native share)
     if (typeof navigator !== 'undefined' && 'share' in navigator) {
       try {
-        const shareData: ShareData = {
-          url: shareUrl,
-          title: 'My Howzat11 Team',
-          text: 'Check out my fantasy cricket team!',
-        };
-        
-        // Add image if we captured one and browser supports file sharing
-        if (imageFile && navigator.canShare && navigator.canShare({ files: [imageFile] })) {
-          shareData.files = [imageFile];
-        }
-        
-        await navigator.share(shareData);
+        await navigator.share({ url: shareUrl });
         return; // Success, exit early
       } catch (err) {
         // User cancelled sharing - don't do anything
@@ -374,7 +335,6 @@ export default function Home() {
 
       {/* Success Modal (User's team) */}
       <SuccessModal
-        ref={modalRef}
         isOpen={showSuccess}
         onClose={() => setShowSuccess(false)}
         players={selectedPlayers}
