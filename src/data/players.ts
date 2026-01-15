@@ -239,6 +239,17 @@ export const availablePlayers: Player[] = [
     },
   },
   {
+    id: 'zaman-khan',
+    name: 'Zaman khan',
+    country: 'Pakistan',
+    role: 'Bowler',
+    bowlingStyle: 'Fast',
+    imageUrl: 'https://howzat11.s3.us-east-1.amazonaws.com/zaman-khan.png',
+    stats: {
+      economy: 8.35,
+    },
+  },
+  {
     id: 'abrar-ahmed',
     name: 'Abrar Ahmed',
     country: 'Pakistan',
