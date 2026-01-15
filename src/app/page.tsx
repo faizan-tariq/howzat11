@@ -18,6 +18,30 @@ interface StoredState {
   wicketKeeperId: string | null;
 }
 
+// Encode team data into a URL-safe string
+function encodeTeamData(data: StoredState): string {
+  const compact = {
+    p: data.selectedPlayerIds,
+    c: data.captainId,
+    w: data.wicketKeeperId,
+  };
+  return btoa(JSON.stringify(compact));
+}
+
+// Decode team data from URL parameter
+function decodeTeamData(encoded: string): StoredState | null {
+  try {
+    const compact = JSON.parse(atob(encoded));
+    return {
+      selectedPlayerIds: compact.p || [],
+      captainId: compact.c || null,
+      wicketKeeperId: compact.w || null,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export default function Home() {
   const [selectedPlayers, setSelectedPlayers] = useState<Player[]>([]);
   const [captain, setCaptain] = useState<Player | null>(null);
@@ -25,9 +49,51 @@ export default function Home() {
   const [showSidebar, setShowSidebar] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  
+  // Shared team state (from URL)
+  const [sharedTeam, setSharedTeam] = useState<{
+    players: Player[];
+    captain: Player | null;
+    wicketKeeper: Player | null;
+  } | null>(null);
+  const [showSharedModal, setShowSharedModal] = useState(false);
 
-  // Load state from localStorage on mount
+  // Load state from localStorage and check URL for shared team
   useEffect(() => {
+    // Check URL for shared team
+    const urlParams = new URLSearchParams(window.location.search);
+    const teamParam = urlParams.get('team');
+    
+    if (teamParam) {
+      const decoded = decodeTeamData(teamParam);
+      if (decoded) {
+        const sharedPlayers = decoded.selectedPlayerIds
+          .map(id => availablePlayers.find(p => p.id === id))
+          .filter((p): p is Player => p !== undefined);
+        
+        const sharedCaptain = decoded.captainId 
+          ? availablePlayers.find(p => p.id === decoded.captainId) || null 
+          : null;
+        
+        const sharedWK = decoded.wicketKeeperId 
+          ? availablePlayers.find(p => p.id === decoded.wicketKeeperId) || null 
+          : null;
+        
+        if (sharedPlayers.length > 0) {
+          setSharedTeam({
+            players: sharedPlayers,
+            captain: sharedCaptain,
+            wicketKeeper: sharedWK,
+          });
+          setShowSharedModal(true);
+          
+          // Clear the URL parameter without reloading
+          window.history.replaceState({}, '', window.location.pathname);
+        }
+      }
+    }
+    
+    // Load from localStorage
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
@@ -125,6 +191,61 @@ export default function Home() {
     setShowSuccess(false);
   }, []);
 
+  // Handle sharing team
+  const handleShare = useCallback(async () => {
+    const data: StoredState = {
+      selectedPlayerIds: selectedPlayers.map(p => p.id),
+      captainId: captain?.id || null,
+      wicketKeeperId: wicketKeeper?.id || null,
+    };
+    
+    const encoded = encodeTeamData(data);
+    const shareUrl = `${window.location.origin}${window.location.pathname}?team=${encoded}`;
+    
+    // Helper to copy to clipboard with fallback
+    const copyToClipboard = async (text: string) => {
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(text);
+          alert('Link copied to clipboard!');
+        } else {
+          // Fallback for older browsers
+          const textArea = document.createElement('textarea');
+          textArea.value = text;
+          textArea.style.position = 'fixed';
+          textArea.style.left = '-9999px';
+          textArea.style.top = '0';
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textArea);
+          alert('Link copied to clipboard!');
+        }
+      } catch {
+        // If all else fails, show the URL to copy manually
+        prompt('Copy this link to share your team:', text);
+      }
+    };
+    
+    // Try Web Share API first (mobile native share)
+    if (typeof navigator !== 'undefined' && 'share' in navigator) {
+      try {
+        await navigator.share({ url: shareUrl });
+        return; // Success, exit early
+      } catch (err) {
+        // User cancelled sharing - don't do anything
+        if ((err as Error).name === 'AbortError') {
+          return;
+        }
+        // Other error - fall through to clipboard
+      }
+    }
+    
+    // Fallback: copy to clipboard
+    await copyToClipboard(shareUrl);
+  }, [selectedPlayers, captain, wicketKeeper]);
+
   return (
     <main className="min-h-screen pt-6 sm:pt-8 pb-20 select-none relative z-10">
       {/* Main Content */}
@@ -212,14 +333,27 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      {/* Success Modal */}
+      {/* Success Modal (User's team) */}
       <SuccessModal
         isOpen={showSuccess}
-        onClose={handleReset}
+        onClose={() => setShowSuccess(false)}
         players={selectedPlayers}
         captain={captain}
         wicketKeeper={wicketKeeper}
+        onShare={handleShare}
       />
+
+      {/* Shared Team Modal */}
+      {sharedTeam && (
+        <SuccessModal
+          isOpen={showSharedModal}
+          onClose={() => setShowSharedModal(false)}
+          players={sharedTeam.players}
+          captain={sharedTeam.captain}
+          wicketKeeper={sharedTeam.wicketKeeper}
+          isSharedTeam
+        />
+      )}
 
       {/* Floating Player Count (Mobile) */}
       <div className="fixed bottom-4 left-1/2 -translate-x-1/2 lg:hidden">

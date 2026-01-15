@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { Player } from '@/types';
-import { Trophy, Sparkles, X, Share2, Download } from 'lucide-react';
+import { Trophy, X, Share2 } from 'lucide-react';
 import clsx from 'clsx';
 
 interface SuccessModalProps {
@@ -11,6 +11,8 @@ interface SuccessModalProps {
   players: Player[];
   captain: Player | null;
   wicketKeeper: Player | null;
+  onShare?: () => void;
+  isSharedTeam?: boolean;
 }
 
 export default function SuccessModal({
@@ -19,6 +21,8 @@ export default function SuccessModal({
   players,
   captain,
   wicketKeeper,
+  onShare,
+  isSharedTeam = false,
 }: SuccessModalProps) {
   return (
     <AnimatePresence>
@@ -44,37 +48,8 @@ export default function SuccessModal({
             animate={{ scale: 1, opacity: 1, rotateX: 0 }}
             exit={{ scale: 0.5, opacity: 0, rotateX: 15 }}
             transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-            className="relative w-full max-w-2xl bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl overflow-hidden"
+            className="relative w-full max-w-md bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl overflow-hidden"
           >
-            {/* Confetti effect */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-              {Array.from({ length: 30 }).map((_, i) => (
-                <motion.div
-                  key={i}
-                  initial={{
-                    x: '50%',
-                    y: '50%',
-                    scale: 0,
-                  }}
-                  animate={{
-                    x: `${Math.random() * 100}%`,
-                    y: `${Math.random() * 100}%`,
-                    scale: [0, 1, 0],
-                    rotate: Math.random() * 360,
-                  }}
-                  transition={{
-                    duration: 2,
-                    delay: i * 0.05,
-                    repeat: Infinity,
-                    repeatDelay: 3,
-                  }}
-                  className={clsx(
-                    'absolute w-3 h-3 rounded-sm',
-                    ['bg-amber-400', 'bg-emerald-400', 'bg-blue-400', 'bg-purple-400', 'bg-red-400'][i % 5]
-                  )}
-                />
-              ))}
-            </div>
 
             {/* Close button */}
             <button
@@ -85,7 +60,7 @@ export default function SuccessModal({
             </button>
 
             {/* Content */}
-            <div className="relative p-8 text-center">
+            <div className="relative p-4 sm:p-5 text-center">
               {/* Trophy animation */}
               <motion.div
                 animate={{
@@ -93,10 +68,10 @@ export default function SuccessModal({
                   rotateZ: [0, -5, 5, 0],
                 }}
                 transition={{ duration: 2, repeat: Infinity }}
-                className="inline-block mb-6"
+                className="inline-block"
               >
                 <div className="relative">
-                  <Trophy className="w-20 h-20 text-amber-400" />
+                  <Trophy className="w-10 h-10 text-amber-400" />
                   <motion.div
                     animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
                     transition={{ duration: 1.5, repeat: Infinity }}
@@ -110,89 +85,222 @@ export default function SuccessModal({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
               >
-                <h2 className="font-display text-3xl sm:text-4xl font-bold text-white mb-2">
-                  TEAM CONFIRMED!
+                <h2 className="font-display text-xl sm:text-2xl font-bold text-white">
+                  {isSharedTeam ? 'Shared Howzat11' : 'Your Howzat11'}
                 </h2>
-                <div className="flex items-center justify-center gap-2 text-amber-400">
-                  <Sparkles className="w-5 h-5" />
-                  <span className="font-medium">Your Dream XI is ready</span>
-                  <Sparkles className="w-5 h-5" />
-                </div>
               </motion.div>
 
-              {/* Team summary */}
+              {/* Team grid */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="mt-8 p-6 bg-slate-800/50 rounded-2xl border border-slate-700"
+                className="mt-4 space-y-2"
               >
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                  {/* Captain */}
-                  <div className="text-center">
-                    <div className="text-xs text-slate-500 mb-2">CAPTAIN</div>
-                    <div className="relative w-16 h-16 mx-auto rounded-full border-3 border-amber-400 overflow-hidden mb-2">
-                      {captain?.imageUrl && (
-                        <img 
-                          src={captain.imageUrl} 
-                          alt={captain.name}
-                          className="w-full h-full object-cover"
-                        />
-                      )}
-                      <img 
-                        src="https://howzat11.s3.us-east-1.amazonaws.com/kit.png"
-                        alt=""
-                        className="absolute left-1/2 -translate-x-1/2 bottom-0 w-full h-auto pointer-events-none"
-                      />
-                    </div>
-                    <div className="font-medium text-white text-sm">{captain?.name}</div>
-                  </div>
+                {/* First row - 3 players centered */}
+                <div className="flex justify-center gap-2">
+                  {players.slice(0, 3).map((player, index) => {
+                    const isCaptain = captain?.id === player.id;
+                    const isWK = wicketKeeper?.id === player.id;
+                    
+                    return (
+                      <motion.div
+                        key={player.id}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.3 + index * 0.05 }}
+                        className={clsx(
+                          'player-card relative',
+                          'w-[23%] aspect-[4/5] rounded-xl overflow-hidden',
+                          'bg-slate-900/50 backdrop-blur-sm',
+                          'border',
+                          isCaptain || isWK ? 'border-amber-400' : 'border-white/10'
+                        )}
+                      >
+                        {/* Badge indicator */}
+                        {(isCaptain || isWK) && (
+                          <div className="absolute top-1 left-1/2 -translate-x-1/2 z-10">
+                            <div className={clsx(
+                              'px-2 py-0.5 rounded-full font-display text-[8px] font-bold text-black',
+                              isCaptain && isWK && 'bg-gradient-to-r from-amber-500 to-emerald-500',
+                              isCaptain && !isWK && 'bg-gradient-to-r from-amber-500 to-amber-600',
+                              !isCaptain && isWK && 'bg-gradient-to-r from-emerald-500 to-emerald-600'
+                            )}>
+                              {isCaptain && isWK ? 'C/WK' : isCaptain ? 'C' : 'WK'}
+                            </div>
+                          </div>
+                        )}
 
-                  {/* Wicket Keeper */}
-                  <div className="text-center">
-                    <div className="text-xs text-slate-500 mb-2">WICKET-KEEPER</div>
-                    <div className="relative w-16 h-16 mx-auto rounded-full border-3 border-emerald-400 overflow-hidden mb-2">
-                      {wicketKeeper?.imageUrl && (
-                        <img 
-                          src={wicketKeeper.imageUrl} 
-                          alt={wicketKeeper.name}
-                          className="w-full h-full object-cover"
-                        />
-                      )}
-                      <img 
-                        src="https://howzat11.s3.us-east-1.amazonaws.com/kit.png"
-                        alt=""
-                        className="absolute left-1/2 -translate-x-1/2 bottom-0 w-full h-auto pointer-events-none"
-                      />
-                    </div>
-                    <div className="font-medium text-white text-sm">{wicketKeeper?.name}</div>
-                  </div>
+                        {/* Card content */}
+                        <div className="h-full flex flex-col justify-center p-1 md:p-1.5">
+                          {/* Avatar */}
+                          <div className="flex items-center justify-center">
+                            <div className={clsx(
+                              'relative w-10 h-10 sm:w-12 sm:h-12 rounded-full',
+                              'border-2 overflow-hidden shadow-lg shadow-black/30',
+                              isCaptain || isWK ? 'border-amber-400' : 'border-slate-600',
+                              !player.imageUrl && 'bg-gradient-to-br from-slate-700 to-slate-800'
+                            )}>
+                              {player.imageUrl ? (
+                                <img 
+                                  src={player.imageUrl} 
+                                  alt={player.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <span className="text-sm font-display font-bold text-slate-400">
+                                    {player.name.split(' ').map(n => n[0]).join('')}
+                                  </span>
+                                </div>
+                              )}
+                              <img 
+                                src="https://howzat11.s3.us-east-1.amazonaws.com/kit.png"
+                                alt=""
+                                className="absolute left-1/2 -translate-x-1/2 bottom-0 w-full h-auto pointer-events-none"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Player name */}
+                          <div className="text-center mt-1">
+                            <h3 className="font-display text-[9px] sm:text-[10px] font-bold text-white truncate leading-tight">
+                              {player.name}
+                            </h3>
+                          </div>
+
+                          {/* Stats */}
+                          <div className="grid grid-cols-2 gap-0.5 text-center mt-1">
+                            {player.stats.strikeRate && (
+                              <div className={clsx(
+                                'bg-blue-500/20 rounded p-0.5',
+                                !player.stats.economy && 'col-span-2'
+                              )}>
+                                <div className="font-score text-[9px] font-bold text-blue-400">
+                                  {player.stats.strikeRate.toFixed(0)}
+                                </div>
+                                <div className="text-[6px] text-blue-400/70">SR</div>
+                              </div>
+                            )}
+                            {player.stats.economy && (
+                              <div className={clsx(
+                                'bg-red-500/20 rounded p-0.5',
+                                !player.stats.strikeRate && 'col-span-2'
+                              )}>
+                                <div className="font-score text-[9px] font-bold text-red-400">
+                                  {player.stats.economy.toFixed(1)}
+                                </div>
+                                <div className="text-[6px] text-red-400/70">ECO</div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
                 </div>
 
-                {/* Team list */}
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                  {players.filter(p => p.id !== captain?.id && p.id !== wicketKeeper?.id).map((player) => (
-                    <div
-                      key={player.id}
-                      className="bg-slate-700/50 rounded-lg p-2 text-center"
-                    >
-                      <div className="relative w-8 h-8 mx-auto rounded-full overflow-hidden mb-1">
-                        {player.imageUrl && (
-                          <img 
-                            src={player.imageUrl} 
-                            alt={player.name}
-                            className="w-full h-full object-cover"
-                          />
+                {/* Remaining rows - 4 players each */}
+                <div className="grid grid-cols-4 gap-2">
+                  {players.slice(3).map((player, index) => {
+                    const isCaptain = captain?.id === player.id;
+                    const isWK = wicketKeeper?.id === player.id;
+                    
+                    return (
+                      <motion.div
+                        key={player.id}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.3 + (index + 3) * 0.05 }}
+                        className={clsx(
+                          'player-card relative',
+                          'w-full aspect-[4/5] rounded-xl overflow-hidden',
+                          'bg-slate-900/50 backdrop-blur-sm',
+                          'border',
+                          isCaptain || isWK ? 'border-amber-400' : 'border-white/10'
                         )}
-                        <img 
-                          src="https://howzat11.s3.us-east-1.amazonaws.com/kit.png"
-                          alt=""
-                          className="absolute left-1/2 -translate-x-1/2 bottom-0 w-full h-auto pointer-events-none"
-                        />
-                      </div>
-                      <div className="text-xs text-slate-400 truncate">{player.name.split(' ').pop()}</div>
-                    </div>
-                  ))}
+                      >
+                        {/* Badge indicator */}
+                        {(isCaptain || isWK) && (
+                          <div className="absolute top-1 left-1/2 -translate-x-1/2 z-10">
+                            <div className={clsx(
+                              'px-2 py-0.5 rounded-full font-display text-[8px] font-bold text-black',
+                              isCaptain && isWK && 'bg-gradient-to-r from-amber-500 to-emerald-500',
+                              isCaptain && !isWK && 'bg-gradient-to-r from-amber-500 to-amber-600',
+                              !isCaptain && isWK && 'bg-gradient-to-r from-emerald-500 to-emerald-600'
+                            )}>
+                              {isCaptain && isWK ? 'C/WK' : isCaptain ? 'C' : 'WK'}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Card content */}
+                        <div className="h-full flex flex-col justify-center p-1 md:p-1.5">
+                          {/* Avatar */}
+                          <div className="flex items-center justify-center">
+                            <div className={clsx(
+                              'relative w-10 h-10 sm:w-12 sm:h-12 rounded-full',
+                              'border-2 overflow-hidden shadow-lg shadow-black/30',
+                              isCaptain || isWK ? 'border-amber-400' : 'border-slate-600',
+                              !player.imageUrl && 'bg-gradient-to-br from-slate-700 to-slate-800'
+                            )}>
+                              {player.imageUrl ? (
+                                <img 
+                                  src={player.imageUrl} 
+                                  alt={player.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <span className="text-sm font-display font-bold text-slate-400">
+                                    {player.name.split(' ').map(n => n[0]).join('')}
+                                  </span>
+                                </div>
+                              )}
+                              <img 
+                                src="https://howzat11.s3.us-east-1.amazonaws.com/kit.png"
+                                alt=""
+                                className="absolute left-1/2 -translate-x-1/2 bottom-0 w-full h-auto pointer-events-none"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Player name */}
+                          <div className="text-center mt-1">
+                            <h3 className="font-display text-[9px] sm:text-[10px] font-bold text-white truncate leading-tight">
+                              {player.name}
+                            </h3>
+                          </div>
+
+                          {/* Stats */}
+                          <div className="grid grid-cols-2 gap-0.5 text-center mt-1">
+                            {player.stats.strikeRate && (
+                              <div className={clsx(
+                                'bg-blue-500/20 rounded p-0.5',
+                                !player.stats.economy && 'col-span-2'
+                              )}>
+                                <div className="font-score text-[9px] font-bold text-blue-400">
+                                  {player.stats.strikeRate.toFixed(0)}
+                                </div>
+                                <div className="text-[6px] text-blue-400/70">SR</div>
+                              </div>
+                            )}
+                            {player.stats.economy && (
+                              <div className={clsx(
+                                'bg-red-500/20 rounded p-0.5',
+                                !player.stats.strikeRate && 'col-span-2'
+                              )}>
+                                <div className="font-score text-[9px] font-bold text-red-400">
+                                  {player.stats.economy.toFixed(1)}
+                                </div>
+                                <div className="text-[6px] text-red-400/70">ECO</div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
                 </div>
               </motion.div>
 
@@ -201,16 +309,25 @@ export default function SuccessModal({
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
-                className="mt-6 flex gap-4 justify-center"
+                className="mt-4 flex gap-4 justify-center"
               >
-                <button className="flex items-center gap-2 px-6 py-3 bg-slate-700 hover:bg-slate-600 rounded-xl transition-colors">
-                  <Share2 className="w-5 h-5" />
-                  <span className="font-medium">Share</span>
-                </button>
-                <button className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 rounded-xl transition-colors text-black font-bold">
-                  <Download className="w-5 h-5" />
-                  <span>Save Team</span>
-                </button>
+                {onShare && (
+                  <button 
+                    onClick={onShare}
+                    className="flex items-center gap-2 px-6 py-3 bg-slate-700 hover:bg-slate-600 rounded-xl transition-colors"
+                  >
+                    <Share2 className="w-5 h-5" />
+                    <span className="font-medium">Share</span>
+                  </button>
+                )}
+                {isSharedTeam && (
+                  <button 
+                    onClick={onClose}
+                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 rounded-xl transition-colors text-black font-bold"
+                  >
+                    <span>Build Your Howzat11</span>
+                  </button>
+                )}
               </motion.div>
             </div>
           </motion.div>
