@@ -250,17 +250,6 @@ export const availablePlayers: Player[] = [
     },
   },
   {
-    id: 'hassan-ali',
-    name: 'Hassan Ali',
-    country: 'Pakistan',
-    role: 'Bowler',
-    bowlingStyle: 'Fast',
-    imageUrl: 'https://howzat11.s3.us-east-1.amazonaws.com/hassan-ali.png',
-    stats: {
-      economy: 8.35,
-    },
-  },
-  {
     id: 'abrar-ahmed',
     name: 'Abrar Ahmed',
     country: 'Pakistan',
@@ -272,17 +261,6 @@ export const availablePlayers: Player[] = [
     },
   },
   {
-    id: 'sufiyan-muqeem',
-    name: 'Sufiyan Muqeem',
-    country: 'Pakistan',
-    role: 'Bowler',
-    bowlingStyle: 'Spin',
-    imageUrl: 'https://howzat11.s3.us-east-1.amazonaws.com/sufiyaan-muqeem.png',
-    stats: {
-      economy: 6.85,
-    },
-  },
-  {
     id: 'usman-tariq',
     name: 'Usman Tariq',
     country: 'Pakistan',
@@ -291,6 +269,17 @@ export const availablePlayers: Player[] = [
     imageUrl: 'https://howzat11.s3.us-east-1.amazonaws.com/usman-tariq.png',
     stats: {
       economy: 7.15,
+    },
+  },
+  {
+    id: 'sufiyan-muqeem',
+    name: 'Sufiyan Muqeem',
+    country: 'Pakistan',
+    role: 'Bowler',
+    bowlingStyle: 'Spin',
+    imageUrl: 'https://howzat11.s3.us-east-1.amazonaws.com/sufiyaan-muqeem.png',
+    stats: {
+      economy: 6.85,
     },
   },
   {
@@ -313,6 +302,17 @@ export const availablePlayers: Player[] = [
     imageUrl: 'https://howzat11.s3.us-east-1.amazonaws.com/haider-ali.png',
     stats: {
       strikeRate: 132.12,
+    },
+  },
+  {
+    id: 'hassan-ali',
+    name: 'Hassan Ali',
+    country: 'Pakistan',
+    role: 'Bowler',
+    bowlingStyle: 'Fast',
+    imageUrl: 'https://howzat11.s3.us-east-1.amazonaws.com/hassan-ali.png',
+    stats: {
+      economy: 8.35,
     },
   },
 ];
